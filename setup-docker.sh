@@ -133,7 +133,7 @@ done
 if id "$NEW_USER" &>/dev/null; then
     info "User '$NEW_USER' already exists"
 else
-    adduser "$NEW_USER" </dev/tty \
+    adduser --gecos "" "$NEW_USER" </dev/tty \
         || die "Failed to create user '$NEW_USER'"
     info "Created user '$NEW_USER'"
 fi
@@ -309,18 +309,21 @@ IP=$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}')
 [ -z "$IP" ] && IP=$(hostname -I | awk '{print $1}')
 [ -z "$IP" ] && IP="YOUR_SERVER_IP"
 
+echo "For additional security and setup steps, including swap and SSH keys:"
+echo -e "${GREEN}https://ttt.do/vps-setup${NC}\n"
+
 echo "🚨 IMPORTANT NEXT STEPS:"
 echo -e "⚠ Log out and reconnect before running Docker as the new user.\n"
 
 if [ -f /var/run/reboot-required ]; then
-    echo -e "${YELLOW}Reboot required. Server restarting in 5 seconds...${NC}"
+    echo -e "${YELLOW}Reboot required. Server will restart when ready...${NC}"
     echo -e "Once it boots up, reconnect using: ${GREEN}ssh $NEW_USER@$IP${NC}\n"
-    sleep 5
-    reboot
+
+    until systemctl --check-inhibitors=yes reboot >> "$LOG_FILE" 2>&1; do
+        info "Reboot blocked. Retrying in 5 seconds..."
+        sleep 5
+    done
 else
     echo "1. Type 'exit' to log out of this root session."
     echo -e "2. Reconnect using: ${GREEN}ssh $NEW_USER@$IP${NC}\n"
 fi
-
-echo "For additional security and setup steps, including swap and SSH keys:"
-echo -e "${GREEN}https://ttt.do/vps-setup${NC}\n"

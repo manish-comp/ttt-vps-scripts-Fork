@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPT_VERSION="v1.4"
+SCRIPT_VERSION="v1.5"
 # ==============================================================================
 # Tony Teaches Tech's VPS Setup Script
 # ==============================================================================
@@ -197,7 +197,10 @@ apt-get update -qq >> "$LOG_FILE" 2>&1 || die "apt update failed"
 info "Updated package lists"
 
 wait_for_apt
-DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq >> "$LOG_FILE" 2>&1 || die "upgrade failed"
+DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold" \
+    </dev/null >> "$LOG_FILE" 2>&1 || die "upgrade failed"
 info "Upgraded system packages"
 
 ok
